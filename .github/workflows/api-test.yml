@@ -27,7 +27,6 @@ jobs:
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
       run: |
         echo "🔧 Creating Laravel .env file from .env.ci template..."
-        # Lệnh envsubst sẽ đọc file .env.ci, tìm các biến $VAR và thay bằng giá trị từ secrets
         envsubst < sprint5-with-bugs/API/.env.ci > sprint5-with-bugs/API/.env
         echo "✅ .env file created successfully."
 
@@ -44,15 +43,12 @@ jobs:
     - name: Setup Application 🔧
       run: |
         echo "📦 Installing Composer dependencies..."
-        # Sử dụng service 'composer' đã định nghĩa trong docker-compose.yml
         docker compose run --rm composer
         
         echo "🔒 Fixing permissions..."
-        # Gán quyền truy cập cho thư mục storage và cache
         docker compose exec -T -u root laravel-api chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
         
         echo "🗄️ Running database migrations and seeding..."
-        # Chạy migrate & seed
         docker compose exec -T laravel-api php artisan migrate:fresh --seed --force
 
     # Bước 6: Cài đặt Node.js và Newman
@@ -63,17 +59,22 @@ jobs:
     - run: npm install -g newman newman-reporter-htmlextra
 
     # Bước 7: Chạy kiểm thử Newman
-    # TODO (Bạn thêm code ở dưới đây)
     - name: Run Newman Tests 🚀
       run: |
-        
+        mkdir -p newman
+        newman run postman/collection.json \
+          -e postman/environment.json \
+          -d postman/data.csv \
+          --reporters cli,htmlextra \
+          --reporter-htmlextra-export newman/report.html
+
     # Bước 8: Upload báo cáo (luôn chạy)
     - name: Upload Test Report 📊
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        # name: newman-report (đổi tên lại cho phù hợp)
-        # path: test-report.html (đổi tên lại cho phù hợp)
+        name: newman-report
+        path: newman/report.html
 
     # Bước 9: Dọn dẹp (luôn chạy)
     - name: Cleanup 🧹

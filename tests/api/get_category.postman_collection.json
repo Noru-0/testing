@@ -1,0 +1,56 @@
+{
+  "info": {
+    "_postman_id": "category-api-test-12345",
+    "name": "Category API Tests",
+    "description": "Data-driven testing for GET /category/{categoryId}",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Category by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/category/{{categoryId}}",
+          "host": ["{{base_url}}"],
+          "path": ["category", "{{categoryId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const status = parseInt(data.expected_status);",
+              "",
+              "pm.test(\"Status code matches expected\", function () {",
+              "    pm.expect(pm.response.code).to.eql(status);",
+              "});",
+              "",
+              "if (status === 200) {",
+              "    pm.test(\"Response contains category fields\", function () {",
+              "        const jsonData = pm.response.json();",
+              "        pm.expect(jsonData).to.have.all.keys('id', 'parent_id', 'name', 'slug');",
+              "    });",
+              "} else if (status === 404 || status === 405) {",
+              "    pm.test(\"Error message is correct\", function () {",
+              "        const jsonData = pm.response.json();",
+              "        pm.expect(jsonData).to.have.property('message');",
+              "        pm.expect(jsonData.message).to.eql(data.expected_message);",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8091"
+    }
+  ]
+}
